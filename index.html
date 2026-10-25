@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>ColorUp.io — Board Game Multiplayer (PRD v2.1 “Ascension”)</title>
+<meta name="description" content="ColorUp.io v1.2 'Clarity & Polish': board game web dengan preset lobi, audio matte, spring motion, sabotase langsung di papan, trade wizard, dan podium hasil.">
+<meta name="theme-color" content="#0f0f17">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a1a24'/%3E%3Ccircle cx='11' cy='12' r='4' fill='%233b82f6'/%3E%3Ccircle cx='21' cy='12' r='4' fill='%23ec4899'/%3E%3Ccircle cx='16' cy='21' r='4' fill='%2310b981'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ============================ LOBI (A.12) ============================ -->
+  <section id="screenLobby" class="screen on">
+    <div class="lobby">
+      <header class="hero">
+        <div class="hero-logo">ColorUp<em>.io</em></div>
+        <p class="hero-sub">Board game multiplayer yang tenang dan presisi. Pilih satu preset, lalu main — semua knob tersimpan di Pengaturan Lanjutan.</p>
+      </header>
+
+      <div id="presetRow" class="preset-row" role="radiogroup" aria-label="Preset permainan">
+        <button class="preset on" data-preset="casual" role="radio" aria-checked="true">
+          <span class="preset-ico">🎈</span>
+          <span class="preset-name">Cepat &amp; Santai</span>
+          <span class="preset-chips"><span>Mini</span><span>FFA</span><span>tanpa cuaca</span></span>
+          <span class="preset-est">± 15–20 menit</span>
+        </button>
+        <button class="preset" data-preset="strict" role="radio" aria-checked="false">
+          <span class="preset-ico">⚔️</span>
+          <span class="preset-name">Strategi Ketat</span>
+          <span class="preset-chips"><span>Classic</span><span>strict</span><span>even build</span></span>
+          <span class="preset-est">± 60–90 menit</span>
+        </button>
+        <button class="preset" data-preset="chaos" role="radio" aria-checked="false">
+          <span class="preset-ico">💥</span>
+          <span class="preset-name">Kekacauan Total</span>
+          <span class="preset-chips"><span>Epic</span><span>cuaca cepat</span><span>ghost</span></span>
+          <span class="preset-est">± 2–3 jam</span>
+        </button>
+        <button class="preset" data-preset="learn" role="radio" aria-checked="false">
+          <span class="preset-ico">🎓</span>
+          <span class="preset-name">Belajar</span>
+          <span class="preset-chips"><span>Mini</span><span>tutorial</span><span>2 pemain</span></span>
+          <span class="preset-est">± 10–15 menit</span>
+        </button>
+      </div>
+      <div class="preset-badge">Preset aktif: <b id="presetName">Cepat &amp; Santai</b><button id="presetChange" type="button">Ubah</button></div>
+
+      <div class="card">
+        <h3 class="sec">👥 Pemain <small>2–6 · slot kosong diisi bot</small></h3>
+        <div id="lobbyPlayers" class="pgrid"></div>
+        <div class="lobby-btns">
+          <button id="btnAddPlayer" class="btn small">＋ Tambah</button>
+          <button id="btnFillBots" class="btn small">🤖 Isi Bot</button>
+          <button id="btnClearBots" class="btn small ghostbtn">Hapus Bot</button>
+          <button id="btnRandomize" class="btn small ghostbtn">Acak Token</button>
+        </div>
+
+        <div class="lobby-actions">
+          <button id="btnStart" class="btn primary big">▶ Mulai Game</button>
+          <button id="btnQuickPlay" class="btn big">⚡ Quick Play</button>
+        </div>
+
+        <div class="lobby-foot">
+          <div>
+            <button id="btnAdvanced" class="btn ghostbtn">⚙️ Pengaturan Lanjutan</button>
+            <button id="btnOpenHelp" class="btn ghostbtn">📖 Cara Bermain</button>
+            <button id="btnSimDisconnect" class="btn ghostbtn">🔌 Simulasi Disconnect</button>
+          </div>
+          <div id="lobbySummary" class="mut small"></div>
+        </div>
+
+        <div id="reconnectCard" class="reconnect hidden">
+          <b>🔗 Reconnection Grace Period</b>
+          <p id="reconnectInfo"></p>
+          <button id="btnReconnect" class="btn primary small">Masuk Kembali</button>
+        </div>
+        <div id="versionTag" class="version"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ GAME ============================ -->
+  <section id="screenGame" class="screen">
+    <header id="topbar" class="topbar">
+      <div class="brand">ColorUp<em>.io</em></div>
+      <div id="topbarChips" class="topbar-chips" aria-live="polite"></div>
+      <div class="topbar-btns">
+        <button id="btnAudio" class="icon-btn" title="Audio & volume">🔊</button>
+        <button id="btnLogOpen" class="icon-btn" title="Action history log">📜 Log</button>
+        <button id="btnRulesLive" class="icon-btn" title="Pengaturan lanjutan room">⚙️</button>
+        <button id="btnBackLobby" class="icon-btn" title="Keluar ke lobi">✕</button>
+      </div>
+    </header>
+
+    <div id="audioPop" class="audio-pop hidden">
+      <h5>Audio Mixer</h5>
+      <div class="vol-row"><label for="volMaster">Master</label><input id="volMaster" type="range" min="0" max="100"><output id="volMasterOut">80%</output></div>
+      <div class="vol-row"><label for="volSfx">SFX</label><input id="volSfx" type="range" min="0" max="100"><output id="volSfxOut">100%</output></div>
+      <div class="vol-row"><label for="volAmbient">Ambient</label><input id="volAmbient" type="range" min="0" max="100"><output id="volAmbientOut">40%</output></div>
+      <label class="chk"><input id="chkMute" type="checkbox"> Bisukan semua (tersimpan)</label>
+    </div>
+
+    <div id="takeoverBar" class="takeover hidden">
+      <span id="takeoverText"></span>
+      <button id="btnTakeover" class="btn small primary">Ambil Alih</button>
+    </div>
+
+    <div id="ticker" class="ticker" title="Klik untuk membuka action log lengkap">
+      <span class="tk-dot"></span><span id="tickerText" class="tk-text">Menyiapkan pertandingan…</span>
+    </div>
+
+    <div class="game-layout">
+      <aside id="rail" class="rail">
+        <h3 class="sec">Pemain</h3>
+        <div id="playersWrap" class="players"></div>
+      </aside>
+
+      <main id="hud" class="hud">
+        <div id="board" class="board size-classic"></div>
+        <div id="targetBanner" class="target-banner hidden" role="status" aria-live="polite">
+          <span id="targetText">🎯 Pilih target sabotase</span>
+          <span class="mut small">Esc untuk batal</span>
+          <button id="targetCancel" class="tb-x" title="Batal (Esc)">✕</button>
+        </div>
+        <div id="guideBubble" class="guide hidden">
+          <div id="guideText"></div>
+          <div class="guide-btns">
+            <button id="btnGuideNext" class="btn primary small">Lanjut ➜</button>
+            <button id="btnGuideSkip" class="btn small ghostbtn">Lewati Tutorial</button>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <footer class="actionbar" id="actionBar">
+      <div id="turnHint" class="turnhint"></div>
+      <div id="diceBox" class="dicebox"></div>
+      <div class="actions">
+        <span id="primarySlot" class="btn-primary-slot"></span>
+        <button id="btnDrawer" class="btn btn-drawer icon" title="Aksi lain">⋯ Aksi<span id="drawerBadge" class="badge hidden">0</span></button>
+      </div>
+    </footer>
+    <div id="drawerScrim" class="drawer-scrim"></div>
+    <div id="drawer" class="drawer">
+      <h5>Aksi giliran ini</h5>
+      <div id="drawerActions" class="drawer-actions"></div>
+    </div>
+
+    <!-- tombol aksi (dipindah-pindah antara primarySlot & drawer oleh ui.js) -->
+    <div class="templates" id="actionPool">
+      <button id="btnRoll" class="btn primary">🎲 Lempar Dadu</button>
+      <button id="btnBuy" class="btn primary">🛒 Beli</button>
+      <button id="btnAuction" class="btn">🔨 Lelang</button>
+      <button id="btnJailFine" class="btn">💵 Bayar Denda</button>
+      <button id="btnEnd" class="btn primary">✔ Akhiri Giliran</button>
+      <button id="btnBuild" class="btn">🏠 Upgrade</button>
+      <button id="btnMerge" class="btn">🏰 Merge</button>
+      <button id="btnTrade" class="btn">🤝 Trade</button>
+      <button id="btnSabotage" class="btn danger">💣 Sabotase</button>
+      <button id="btnSurrender" class="btn ghostbtn">🏳️ Menyerah</button>
+    </div>
+
+    <div id="miniSheet" class="mini-sheet hidden"><div id="miniSheetBody"></div></div>
+
+    <div id="tilePanel" class="tilepanel hidden">
+      <button id="tileClose" class="tp-close" title="Tutup">×</button>
+      <div id="tileBody"></div>
+    </div>
+  </section>
+
+  <!-- ============================ HASIL (A.14 podium) ============================ -->
+  <section id="screenResults" class="screen">
+    <div class="results">
+      <h2 class="res-title">🏆 Hasil Pertandingan</h2>
+      <div id="resSub" class="res-sub"></div>
+      <div id="resultBody"></div>
+      <div class="res-actions">
+        <button id="btnScreenshot" class="btn">📸 Screenshot Podium</button>
+        <button id="btnRematch" class="btn">🔁 Rematch (seed sama)</button>
+        <button id="btnResultExport" class="btn ghostbtn">⬇ Export Log + Audit</button>
+        <button id="btnResultLobby" class="btn primary">🏠 Kembali ke Lobi</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- template tersembunyi -->
+<div class="templates" aria-hidden="true">
+  <div id="helpBody"></div>
+  <div id="modalRoot"></div>
+</div>
+
+<!-- overlay / modal -->
+<div id="overlay" class="overlay">
+  <div id="overlayBox" class="overlay-box" role="dialog" aria-modal="true">
+    <div class="ov-head"><h3 id="overlayTitle"></h3></div>
+    <div id="overlayBody" class="ov-body"></div>
+    <div id="overlayActions" class="ov-actions"></div>
+  </div>
+</div>
+
+<div id="toasts" class="toasts" aria-live="polite"></div>
+
+<script src="js/data.js"></script>
+<script src="js/game.js"></script>
+<script src="js/bot.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
